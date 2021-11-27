@@ -3,7 +3,7 @@ import struct
 import pyaudio
 
 
-def mic_in_spkr_out(effect_class, frequency, duration=10, **kwargs):
+def mic_in_spkr_out(effect_class, frequency, duration=5, **kwargs):
     """
     play the specified effect using microphone input and will output to speaker
 
@@ -22,7 +22,7 @@ def mic_in_spkr_out(effect_class, frequency, duration=10, **kwargs):
     RATE = 8000  # Sampling rate in Hz (samples/second)
 
     # implement effect
-    effect = effect_class(frequency=frequency / RATE, **kwargs)
+    effect = effect_class(frequency, RATE, **kwargs)
     print(type(effect))
 
     # Open the audio output stream
