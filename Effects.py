@@ -10,15 +10,22 @@ class Effect:
         @param np.array frequency: normalized frequency
         """
         self.frequency = frequency
-        self.n = 0
+        self.n = 0  # TODO: what if self.n keep getting larger?
 
     def cal_output(self, x):
         """
         Calculate the next output. Will not perform clipping!
 
         @param array_like x: sound inputs
+
+        @return array_like output: filter output
         """
         pass
+
+
+class NoEffect(Effect):
+    def cal_output(self, x):
+        return x
 
     def clear(self):
         """
@@ -29,9 +36,6 @@ class Effect:
 
 
 class AM(Effect):
-    def __init__(self, frequency):
-        super().__init__(frequency)
-
     def cal_output(self, x):
         # signal input
         if isinstance(x, int):
@@ -50,10 +54,37 @@ class AM(Effect):
         super().clear()
 
 
-class complexAM(Effect):
-    def __init__(self, frequency):
+class ComplexAM(Effect):
+    def __init__(self, frequency, order=6):
         super().__init__(frequency)
         # TODO: how to choose Rp, Rs, and edge for elliptic filter?
+        b, a = signal.ellip(order, 0.2, 50, 0.48)
+        self.b = [b[i] * 1j ** i for i in range(len(b))]
+        self.a = [a[i] * 1j ** i for i in range(len(a))]
+        self.prev_states = np.zeros(order)
+
+    def cal_output(self, x):
+        """
+        Filter data with the designed filter.
+
+        @param array_like x: sound inputs
+
+        @return array_like output: the output of the filter
+        """
+
+        # calculate complex output
+        complex_output, self.prev_states = signal.lfilter(
+            self.b, self.a, x, zi=self.prev_states)
+        # shift the output
+        t = np.array([self.n+i for i in range(len(x))])  # calculate increment
+        complex_output = complex_output * np.exp(
+            1j * 2 * np.pi * self.frequency * t)
+        self.n += len(x)  # increment self.n
+        # take the real part
+        output = np.real(complex_output)
+
+
+        return output
 
 
 class Delay(Effect):
@@ -61,7 +92,7 @@ class Delay(Effect):
         super().__init__(frequency)
 
 
-class vibrato(Effect):
+class Vibrato(Effect):
     def __init__(self, frequency):
         super().__init__(frequency)
 
@@ -85,21 +116,18 @@ class ButterWorth(Effect):
         self.b, self.a = signal.butter(order, self.frequency * 2, btype)
         self.prev_states = np.zeros(len(self.b) - 1)
 
-    def cal_output(self, x, zi=None):
+    def cal_output(self, x):
         """
         Filter data with the designed filter.
 
         @param array_like x: sound inputs
-        @param array_like zi: optional, initial conditions for the filter delays
 
-        @return array_like y: the output of the filter
-        @return array_like zf: optional, if `zi` is None, this is not returned, otherwise, `zf` holds the
-            final filter delay values.
+        @return array_like output: the output of the filter
         """
-        y, self.prev_states = signal.lfilter(
+        output, self.prev_states = signal.lfilter(
             self.b, self.a, x, zi=self.prev_states)
 
-        return y
+        return output
 
     def clear(self):
         super(ButterWorth, self).clear()

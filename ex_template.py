@@ -23,6 +23,7 @@ def mic_in_spkr_out(effect_class, frequency, duration=10, **kwargs):
 
     # implement effect
     effect = effect_class(frequency=frequency / RATE, **kwargs)
+    print(type(effect))
 
     # Open the audio output stream
     p = pyaudio.PyAudio()
@@ -41,7 +42,7 @@ def mic_in_spkr_out(effect_class, frequency, duration=10, **kwargs):
         x = struct.unpack('h' * BLOCKLEN, input_bytes)
         y = effect.cal_output(x)
 
-        y = np.clip(y.astype(np.int), -32768, 32767)
+        y = np.clip(np.array(y, np.int), -32768, 32767)
 
         # Convert numeric list to binary data
         output_bytes = struct.pack('h' * BLOCKLEN, *y)
