@@ -6,6 +6,13 @@ import pyaudio
 def mic_in_spkr_out(effect_class, frequency, duration=10, **kwargs):
     """
     play the specified effect using microphone input and will output to speaker
+
+    @param Effect effect_class: the filter of type Effect
+    @param np.array frequency: frequencies of the filter
+    @param int duration: the duration of the time
+    @param **kwargs: other kwargs for specific effects
+
+    @return: None
     """
 
     # sound properties
@@ -19,8 +26,7 @@ def mic_in_spkr_out(effect_class, frequency, duration=10, **kwargs):
 
     # Open the audio output stream
     p = pyaudio.PyAudio()
-    PA_FORMAT = p.get_format_from_width(WIDTH)
-    stream = p.open(format=PA_FORMAT,
+    stream = p.open(format=p.get_format_from_width(WIDTH),
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,

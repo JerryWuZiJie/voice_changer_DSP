@@ -5,20 +5,25 @@ from scipy import signal
 class Effect:
     def __init__(self, frequency):
         """
-        frequency: normalized frequency
+        initialize the effect
+
+        @param np.array frequency: normalized frequency
         """
         self.frequency = frequency
         self.n = 0
 
     def cal_output(self, x):
         """
-        calculate the next output
+        Calculate the next output. Will not perform clipping!
+
+        @param array_like x: sound inputs
         """
-        self.n += 1
+        pass
 
     def clear(self):
         """
-        clear all the buffer
+        clear all values that would affect the reuse of the effect
+        e.g. clear self.n and self.buffer
         """
         self.n = 0
 
@@ -26,6 +31,29 @@ class Effect:
 class AM(Effect):
     def __init__(self, frequency):
         super().__init__(frequency)
+
+    def cal_output(self, x):
+        # signal input
+        if isinstance(x, int):
+            output = x * np.cos(2 * np.pi * self.frequency * self.n)
+            self.n += 1
+        # block inputs
+        else:
+            output = np.zeros(len(x), np.int)
+            for i in range(len(x)):
+                output[i] = x[i] * np.cos(2 * np.pi * self.frequency * self.n)
+                self.n += 1
+
+        return output
+
+    def clear(self):
+        super().clear()
+
+
+class complexAM(Effect):
+    def __init__(self, frequency):
+        super().__init__(frequency)
+        # TODO: how to choose Rp, Rs, and edge for elliptic filter?
 
 
 class Delay(Effect):
@@ -44,19 +72,14 @@ class ButterWorth(Effect):
     """
 
     def __init__(self, order, frequency, btype='lowpass'):
-        super().__init__(frequency)
         """
         initialize butterworth filter
 
-        Parameters
-        ----------
-        N : int
-            The order of the filter.
-        Wn : array_like
-            normalized cutoff frequency (between 0 and 1)
-        btype : {'bandpass', 'lowpass', 'highpass', 'bandstop'}, optional
-            The type of filter.  Default is 'bandpass'.
+        @param int order: the order of the filter
+        @param array_like frequency: normalized cutoff frequency (between 0 and 1)
+        @param str btype: optional, the type of filter, default is "lowpass"
         """
+        super().__init__(frequency)
 
         # normalized frequency * 2 since signal.butter use Nyquist frequency as normalization constant
         self.b, self.a = signal.butter(order, self.frequency * 2, btype)
@@ -66,19 +89,11 @@ class ButterWorth(Effect):
         """
         Filter data with the designed filter.
 
-        Parameters
-        ----------
-        x : array_like
-            An N-dimensional input array.
-        zi : array_like, optional
-            Initial conditions for the filter delays.
+        @param array_like x: sound inputs
+        @param array_like zi: optional, initial conditions for the filter delays
 
-        Returns
-        -------
-        y : array
-            The output of the digital filter.
-        zf : array, optional
-            If `zi` is None, this is not returned, otherwise, `zf` holds the
+        @return array_like y: the output of the filter
+        @return array_like zf: optional, if `zi` is None, this is not returned, otherwise, `zf` holds the
             final filter delay values.
         """
         y, self.prev_states = signal.lfilter(
