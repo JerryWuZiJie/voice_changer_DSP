@@ -124,7 +124,7 @@ class Vibrato(Effect):
             frac = (self.kw - tau) - kr_prev
             kr_prev %= len(self.buffer)
             kr_next = (kr_prev + 1) % len(self.buffer)
-            output = (1-frac) * self.buffer[kr_prev] + frac * self.buffer[kr_next]
+            output = (1 - frac) * self.buffer[kr_prev] + frac * self.buffer[kr_next]
 
             # update buffer and time
             self.buffer[self.kw] = single_input
@@ -193,3 +193,44 @@ class LPF(Effect):
 
 class HPF(Effect):
     pass
+
+
+class PP(Effect):
+    def __init__(self, rate, frequency, a=None, b=None, c=None, delay_sec=0.2):
+        super().__init__(frequency, rate)
+
+        # set up buffers of two channels with length N and other parameters
+        if c is None:
+            c = [1, 1]
+        if b is None:
+            b = [0.7, 0.7]
+        if a is None:
+            a = [1, 0]
+        self.N = int(rate * delay_sec)
+        self.buffer1 = self.N * [0]
+        self.buffer2 = self.N * [0]
+        self.a1, self.a2 = a
+        self.b1, self.b2 = b
+        self.c1, self.c2 = c
+
+    def cal_output(self, x):
+        k = 0
+        output1 = len(x) * [0]
+        output2 = len(x) * [0]
+        for i, x_i in enumerate(x):
+            x_i1 = x_i
+            x_i2 = x_i
+
+            u0_1 = self.a1 * x_i1 + self.b1 * self.buffer2[k]
+            u0_2 = self.a2 * x_i2 + self.b2 * self.buffer1[k]
+
+            y0_1 = self.a1 * x_i1 + self.c1 * self.buffer1[k]
+            y0_2 = self.a2 * x_i2 + self.c2 * self.buffer2[k]
+
+            self.buffer1[k] = u0_1
+            self.buffer2[k] = u0_2
+            k = (k + 1) % self.N
+            output1[i] = y0_1
+            output2[i] = y0_2
+
+        return output1, output2
