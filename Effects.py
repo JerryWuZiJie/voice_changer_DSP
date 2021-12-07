@@ -234,3 +234,7 @@ class PP(Effect):
             output2[i] = y0_2
 
         return output1, output2
+
+class KS(Effect):
+    def __init__(self, frequency, rate):
+        super().__init__(frequency, rate)
