@@ -235,6 +235,25 @@ class PP(Effect):
 
         return output1, output2
 
-class KS(Effect):
-    def __init__(self, frequency, rate):
+
+class Echo(Effect):
+    def __init__(self, frequency, rate, num_dly=4, dly_in_sec=0.2):
         super().__init__(frequency, rate)
+        self.gainList = np.linspace(3, 1, num=num_dly, endpoint=True)
+        self.dly_in_samp = int(dly_in_sec * rate)
+        self.num_dly = num_dly
+
+    def cal_output(self, x):
+        output = len(x) * [0]
+        bufferList = self.num_dly * [self.dly_in_samp * [0]]
+
+        for i, x_i in enumerate(x):
+            y_i = x_i
+            for id, j in enumerate(range(0, self.dly_in_samp * self.num_dly, self.dly_in_samp)):
+                y_i += self.gainList[id] * bufferList[j]
+            output[i] = y_i
+
+        return output
+
+
+
