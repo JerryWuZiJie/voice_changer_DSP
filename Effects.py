@@ -245,13 +245,35 @@ class Echo(Effect):
 
     def cal_output(self, x):
         output = len(x) * [0]
-        bufferList = self.num_dly * [self.dly_in_samp * [0]]
+        buffer_list = self.num_dly * [self.dly_in_samp * (i + 1) * [0] for i in range(self.num_dly)]
 
         for i, x_i in enumerate(x):
             y_i = x_i
-            for id, j in enumerate(range(0, self.dly_in_samp * self.num_dly, self.dly_in_samp)):
-                y_i += self.gainList[id] * bufferList[j]
+            k = np.zeros(self.num_dly)
+            for id in range(self.num_dly):
+                y_i += self.gainList[id] * buffer_list[id][k[id]]
+                buffer_list[id][k[id]] = y_i
+                k[id] = (k[id] + 1) % len(buffer_list[id])
             output[i] = y_i
+
+        return output
+
+
+class Flanger(Effect):
+    def __init__(self, frequency, rate, dly_in_sec=0.2):
+        super().__init__(frequency, rate)
+
+        self.bufferLen = int(rate * dly_in_sec)
+        self.gamma = 2 * np.pi * frequency * self.bufferLen / rate
+
+    def cal_output(self, x):
+        output = len(x) * [0]
+        buffer = self.bufferLen * [0]
+        k = 0
+        for i, x_i in enumerate(x):
+            output[i] = x_i + buffer[int(0.5 * np.sin(self.gamma * x_i) + 0.5)]
+            buffer[k] = output[i]
+            k = (k + 1) % len(buffer)
 
         return output
 
