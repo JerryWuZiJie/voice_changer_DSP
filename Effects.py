@@ -264,7 +264,7 @@ class Flanger(Effect):
         super().__init__(frequency, rate)
 
         self.bufferLen = int(rate * dly_in_sec)
-        self.gamma = 2 * np.pi * frequency * self.bufferLen / rate
+        self.gamma = 2 * np.pi * frequency * self.bufferLen
 
     def cal_output(self, x):
         output = len(x) * [0]
@@ -274,8 +274,11 @@ class Flanger(Effect):
             output[i] = x_i + buffer[int(0.5 * np.sin(self.gamma * x_i) + 0.5)]
             buffer[k] = output[i]
             k = (k + 1) % len(buffer)
-
         return output
+
+# class Autobots(Effect):
+#     def __init__(self, frequency, rate, freq=):
+#         super().__init__(frequency, rate)
 
 
 
