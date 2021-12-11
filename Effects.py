@@ -235,6 +235,50 @@ class PP(Effect):
 
         return output1, output2
 
-class KS(Effect):
-    def __init__(self, frequency, rate):
+
+class Echo(Effect):
+    def __init__(self, frequency, rate, num_dly=4, dly_in_sec=0.2):
         super().__init__(frequency, rate)
+        self.gainList = np.linspace(3, 1, num=num_dly, endpoint=True)
+        self.dly_in_samp = int(dly_in_sec * rate)
+        self.num_dly = num_dly
+
+    def cal_output(self, x):
+        output = len(x) * [0]
+        buffer_list = self.num_dly * [self.dly_in_samp * (i + 1) * [0] for i in range(self.num_dly)]
+
+        for i, x_i in enumerate(x):
+            y_i = x_i
+            k = np.zeros(self.num_dly)
+            for id in range(self.num_dly):
+                y_i += self.gainList[id] * buffer_list[id][k[id]]
+                buffer_list[id][k[id]] = y_i
+                k[id] = (k[id] + 1) % len(buffer_list[id])
+            output[i] = y_i
+
+        return output
+
+
+class Flanger(Effect):
+    def __init__(self, frequency, rate, dly_in_sec=0.2):
+        super().__init__(frequency, rate)
+
+        self.bufferLen = int(rate * dly_in_sec)
+        self.gamma = 2 * np.pi * frequency * self.bufferLen
+
+    def cal_output(self, x):
+        output = len(x) * [0]
+        buffer = self.bufferLen * [0]
+        k = 0
+        for i, x_i in enumerate(x):
+            output[i] = x_i + buffer[int(0.5 * np.sin(self.gamma * x_i) + 0.5)]
+            buffer[k] = output[i]
+            k = (k + 1) % len(buffer)
+        return output
+
+# class Autobots(Effect):
+#     def __init__(self, frequency, rate, freq=):
+#         super().__init__(frequency, rate)
+
+
+
