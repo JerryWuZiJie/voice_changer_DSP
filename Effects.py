@@ -293,16 +293,11 @@ class Drunk(Effect):
         super().__init__(frequency, rate)
         self.freq = frequency
         self.rate = rate
+
     def cal_output(self, x):
         output = np.zeros(x.shape[0])
         for i, x_i in enumerate(x):
-           output[i] = x[i-1] * np.cos(2 * np.pi * i * self.frequency / self.rate) + \
-                       x_i * np.sin(2 * np.pi * i * self.frequency / self.rate)
+            output[i] = x[i - 1] * np.cos(2 * np.pi * i * self.frequency / self.rate) + \
+                        x_i * np.sin(2 * np.pi * i * self.frequency / self.rate)
 
         return output
-    
-
-
-
-
-
