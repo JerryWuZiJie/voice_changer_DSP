@@ -299,5 +299,4 @@ class Drunk(Effect):
         for i, x_i in enumerate(x):
             output[i] = x[i - 1] * np.cos(2 * np.pi * i * self.frequency / self.rate) + \
                         x_i * np.sin(2 * np.pi * i * self.frequency / self.rate)
-
         return output
