@@ -155,7 +155,7 @@ class ButterWorth(Effect):
     this is more like a wrapper for the scipy signal.butter function, for consistence we decide to make it into the child class of Effect
     """
 
-    def __init__(self, frequency, rate, order, btype='lowpass'):
+    def __init__(self, frequency, rate, order=5, btype='lowpass'):
         """
         initialize butterworth filter
 
