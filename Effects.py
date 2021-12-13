@@ -276,9 +276,28 @@ class Flanger(Effect):
             k = (k + 1) % len(buffer)
         return output
 
-# class Autobots(Effect):
-#     def __init__(self, frequency, rate, freq=):
-#         super().__init__(frequency, rate)
+
+class Autobots(Effect):
+    def __init__(self, frequency, rate, low_freq=0.1, high_freq=0.4):
+        super().__init__(frequency, rate)
+        self.cutoff_freq = [low_freq, high_freq]
+
+    def cal_output(self, x):
+        b, a = signal.butter(4, self.cutoff_freq, 'bandpass')
+        output = signal.filtfilt(b, a, x)
+        return output
 
 
+class Drunk(Effect):
+    def __init__(self, frequency, rate):
+        super().__init__(frequency, rate)
+        self.freq = frequency
+        self.rate = rate
 
+    def cal_output(self, x):
+        output = np.zeros(x.shape[0])
+        for i, x_i in enumerate(x):
+            output[i] = x[i - 1] * np.cos(2 * np.pi * i * self.frequency / self.rate) + \
+                        x_i * np.sin(2 * np.pi * i * self.frequency / self.rate)
+
+        return output
