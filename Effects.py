@@ -276,9 +276,18 @@ class Flanger(Effect):
             k = (k + 1) % len(buffer)
         return output
 
-# class Autobots(Effect):
-#     def __init__(self, frequency, rate, freq=):
-#         super().__init__(frequency, rate)
+class Autobots(Effect):
+    def __init__(self, frequency, rate, low_freq=0.1, high_freq=0.4):
+        super().__init__(frequency, rate)
+        self.cutoff_freq = [low_freq, high_freq]
+
+    def cal_output(self, x):
+        b, a = signal.butter(4, self.cutoff_freq, 'bandpass')
+        output = signal.filtfilt(b, a, x)
+        return output
+
+
+
 
 
 
