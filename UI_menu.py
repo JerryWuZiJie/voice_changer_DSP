@@ -1,3 +1,4 @@
+import sys
 import traceback
 import time
 import os
@@ -10,31 +11,30 @@ import PySimpleGUI as sg
 import Effects
 import UI_effects
 
-
-EFFECTS = [i[0] for i in inspect.getmembers(Effects, inspect.isclass)]
+# constant setup
+# default element size
+PIXEL_W = 700
+PIXEL_H = 30
+# pixel size to button size conversion
+PW_TO_B = 1 / 7
+PH_TO_B = 1 / 30
+# default button size
+BUTTON_W = int(PIXEL_W * PW_TO_B)
+BUTTON_H = int(PIXEL_H * PH_TO_B * 3)
+BUTTON_SIZE = (BUTTON_W, BUTTON_H)
+BUTTON_PAD_SIZE = (100, 20)
+COLUMN_SIZE = (1000, 600)
+# default text attributes
+BACK_COLOR = 'grey'
+DEFAULT_FONT = 'Helvetica'
+DEFAULT_FONT_SIZE = 10
+# help menu text size
+HELP_TEXT_SIZE = (int(BUTTON_SIZE[0] * 0.8), 0)
 
 
 def main(theme='Python'):
-    # ----------------pysimplegui (GUI) setup----------------
-
-    # constant setup
-    # default element size
-    PIXEL_W = 700
-    PIXEL_H = 30
-    # pixel size to button size conversion
-    PW_TO_B = 1 / 7
-    PH_TO_B = 1 / 30
-    # default button size
-    BUTTON_W = int(PIXEL_W * PW_TO_B)
-    BUTTON_H = int(PIXEL_H * PH_TO_B * 3)
-    BUTTON_SIZE = (BUTTON_W, BUTTON_H)
-    BUTTON_PAD_SIZE = (100, 20)
-    COLUMN_SIZE = (1000, 600)
-    # default text attributes
-    BACK_COLOR = 'grey'
-    DEFAULT_FONT = 'Helvetica'
-    DEFAULT_FONT_SIZE = 10
-    HELP_TEXT_SIZE = (int(BUTTON_SIZE[0] * 0.8), 0)
+    # effects list
+    effects_list = list(Effects.effects_dict.keys())
 
     # set GUI theme
     sg.theme(theme)
@@ -62,12 +62,13 @@ def main(theme='Python'):
     exit_but = sg.Button('Exit', key='exit_but', pad=BUTTON_PAD_SIZE, size=BUTTON_SIZE, border_width=0,
                          button_color=BACK_COLOR)
 
-    menu = sg.Column(layout=[[welcome_text], [start_but], [diy_but], [help_but], [exit_but]], element_justification='c',)
+    menu = sg.Column(key='menu', layout=[[welcome_text], [start_but], [diy_but], [help_but], [exit_but]], element_justification='c')
+
 
     # --------------------------------
     # widget for effect (start) menu: play/stop button, effects dropdown menu, slider, graph for signal display
     play_but = sg.Button('Play', key='play_but', size=(int(BUTTON_W/3), int(BUTTON_H/2)), )
-    effect_dropdown = sg.Combo(EFFECTS, key='effect_dropdown', default_value=EFFECTS[0], readonly=True, size=(int(BUTTON_W*0.6)), enable_events=True)
+    effect_dropdown = sg.Combo(effects_list, key='effect_dropdown', default_value=effects_list[0], readonly=True, size=(int(BUTTON_W * 0.6)), enable_events=True)
     gain_slider = sg.Slider(range=(0, 100), key='gain_slider', default_value=100, orientation='vertical', enable_events=True)
     gain_slider_text = sg.Text('gain', key='gain_slider_text')
     start_slider_frame = sg.Frame(layout=[[sg.Column([[gain_slider], [gain_slider_text]], element_justification='r')]], title='tunable values', size=(int(PIXEL_W/2), int(PIXEL_H*10)))
@@ -77,13 +78,15 @@ def main(theme='Python'):
     back_start_but = sg.Button('Back', key='back_start_but', pad=BUTTON_PAD_SIZE, size=(BUTTON_W, int(BUTTON_H/2)), border_width=0,
                                button_color=BACK_COLOR)
 
-    start_interface = sg.Column(layout=[[play_but, effect_dropdown], [start_slider_frame, start_plot_frame], [back_start_but]], element_justification='c', visible=False)
+    start_interface = sg.Column(key='start_interface', layout=[[play_but, effect_dropdown], [start_slider_frame, start_plot_frame], [back_start_but]], element_justification='c', visible=False)
 
     # widget for help menu
     back_help_but_t = sg.Button("Back", key='back_h_t', pad=BUTTON_PAD_SIZE, size=(BUTTON_SIZE[0], BUTTON_SIZE[1] // 2),
                                 border_width=0, button_color=BACK_COLOR)
 
-    # instruction
+
+    # --------------------------------
+    # widget for help menu
     instruction_info = []
     instruction_info.append([sg.Text("Warning: user data will be collected, but no private info will be collected\n"
                                      "All the collected data can be viewed in 'voice_changer log' folder",
@@ -153,6 +156,7 @@ def main(theme='Python'):
         elif event == back_start_but.Key:  # return from start menu
             menu.update(visible=True)
             start_interface.update(visible=False)
+        # go to other module to handle the subsystem
         elif event == play_but.Key:
             try:
                 UI_effects.play_effects(window)
@@ -163,6 +167,8 @@ def main(theme='Python'):
                 winsound.PlaySound("ButtonClick.wav", 1)
                 sg.popup('An unexpected error occur during simulation! Error message saved', title='ERROR',
                          keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
+                # break the loop
+                break
 
         else:
             if event == effect_dropdown.Key:
