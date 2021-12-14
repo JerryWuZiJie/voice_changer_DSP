@@ -1,8 +1,13 @@
+import inspect
+import sys
+
 import numpy as np
 from scipy import signal
 
 
 class Effect:
+    changeable_params = []
+
     def __init__(self, frequency, rate):
         """
         initialize the effect
@@ -29,6 +34,15 @@ class Effect:
         e.g. clear self.n and self.buffer
         """
         self.n = 0
+
+    def update(self, param, value):
+        """
+        update user changeable parameters
+        @param param:
+        @param value:
+        @return:
+        """
+        pass
 
 
 class NoEffect(Effect):
@@ -124,7 +138,8 @@ class Vibrato(Effect):
             frac = (self.kw - tau) - kr_prev
             kr_prev %= len(self.buffer)
             kr_next = (kr_prev + 1) % len(self.buffer)
-            output = (1 - frac) * self.buffer[kr_prev] + frac * self.buffer[kr_next]
+            output = (1 - frac) * self.buffer[kr_prev] + frac * self.buffer[
+                kr_next]
 
             # update buffer and time
             self.buffer[self.kw] = single_input
@@ -187,25 +202,11 @@ class ButterWorth(Effect):
         self.prev_states = np.zeros_like(self.prev_states)
 
 
-class LPF(Effect):
-    pass
-
-
-class HPF(Effect):
-    pass
-
-
 class PP(Effect):
-    def __init__(self, rate, frequency, a=None, b=None, c=None, delay_sec=0.2):
+    def __init__(self, rate, frequency, a=[1, 0], b=[0.7, 0.7], c=[1, 1],
+                 delay_sec=0.2):
         super().__init__(frequency, rate)
 
-        # set up buffers of two channels with length N and other parameters
-        if c is None:
-            c = [1, 1]
-        if b is None:
-            b = [0.7, 0.7]
-        if a is None:
-            a = [1, 0]
         self.N = int(rate * delay_sec)
         self.buffer1 = self.N * [0]
         self.buffer2 = self.N * [0]
@@ -245,7 +246,8 @@ class Echo(Effect):
 
     def cal_output(self, x):
         output = len(x) * [0]
-        buffer_list = self.num_dly * [self.dly_in_samp * (i + 1) * [0] for i in range(self.num_dly)]
+        buffer_list = self.num_dly * [self.dly_in_samp * (i + 1) * [0] for i in
+                                      range(self.num_dly)]
 
         for i, x_i in enumerate(x):
             y_i = x_i
@@ -276,9 +278,11 @@ class Flanger(Effect):
             k = (k + 1) % len(buffer)
         return output
 
+
 # class Autobots(Effect):
 #     def __init__(self, frequency, rate, freq=):
 #         super().__init__(frequency, rate)
 
 
-
+# get a list of all the effects
+effects_dict = dict(inspect.getmembers(sys.modules[__name__], inspect.isclass))
