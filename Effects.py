@@ -138,8 +138,7 @@ class Vibrato(Effect):
             frac = (self.kw - tau) - kr_prev
             kr_prev %= len(self.buffer)
             kr_next = (kr_prev + 1) % len(self.buffer)
-            output = (1 - frac) * self.buffer[kr_prev] + frac * self.buffer[
-                kr_next]
+            output = (1 - frac) * self.buffer[kr_prev] + frac * self.buffer[kr_next]
 
             # update buffer and time
             self.buffer[self.kw] = single_input
@@ -202,8 +201,16 @@ class ButterWorth(Effect):
         self.prev_states = np.zeros_like(self.prev_states)
 
 
+class LPF(Effect):
+    pass
+
+
+class HPF(Effect):
+    pass
+
+
 class PP(Effect):
-    def __init__(self, rate, frequency, a=[1, 0], b=[0.7, 0.7], c=[1, 1],
+    def __init__(self, rate, frequency, a=(1, 0), b=(0.7, 0.7), c=(1, 1),
                  delay_sec=0.2):
         super().__init__(frequency, rate)
 
@@ -246,8 +253,7 @@ class Echo(Effect):
 
     def cal_output(self, x):
         output = len(x) * [0]
-        buffer_list = self.num_dly * [self.dly_in_samp * (i + 1) * [0] for i in
-                                      range(self.num_dly)]
+        buffer_list = self.num_dly * [self.dly_in_samp * (i + 1) * [0] for i in range(self.num_dly)]
 
         for i, x_i in enumerate(x):
             y_i = x_i
@@ -279,9 +285,29 @@ class Flanger(Effect):
         return output
 
 
-# class Autobots(Effect):
-#     def __init__(self, frequency, rate, freq=):
-#         super().__init__(frequency, rate)
+class Autobots(Effect):
+    def __init__(self, frequency, rate, low_freq=0.1, high_freq=0.4):
+        super().__init__(frequency, rate)
+        self.cutoff_freq = [low_freq, high_freq]
+
+    def cal_output(self, x):
+        b, a = signal.butter(4, self.cutoff_freq, 'bandpass')
+        output = signal.filtfilt(b, a, x)
+        return output
+
+
+class Drunk(Effect):
+    def __init__(self, frequency, rate):
+        super().__init__(frequency, rate)
+        self.freq = frequency
+        self.rate = rate
+
+    def cal_output(self, x):
+        output = np.zeros(x.shape[0])
+        for i, x_i in enumerate(x):
+            output[i] = x[i - 1] * np.cos(2 * np.pi * i * self.frequency / self.rate) + \
+                        x_i * np.sin(2 * np.pi * i * self.frequency / self.rate)
+        return output
 
 
 # get a list of all the effects
