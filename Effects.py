@@ -312,3 +312,4 @@ class Drunk(Effect):
 
 # get a list of all the effects
 effects_dict = dict(inspect.getmembers(sys.modules[__name__], inspect.isclass))
+del effects_dict[Effect.__name__]  # remove Effect from list, it is abstract

@@ -6,7 +6,7 @@ import pyaudio
 import Effects
 
 # sound properties
-BLOCKLEN = 4096  # Number of frames per block
+BLOCKLEN = 1024  # Number of frames per block
 WIDTH = 2  # Bytes per sample
 CHANNELS = 1  # Number of channels
 RATE = 8000  # Sampling rate in Hz (samples/second)
@@ -38,7 +38,7 @@ def play_effects(window):
 
     while True:
 
-        event, values = window.read(timeout=0.01)
+        event, values = window.read(timeout=1)
 
         # windows closed or back to start menu
         if event == sg.WIN_CLOSED or event == 'back_start_but':
@@ -68,7 +68,7 @@ def play_effects(window):
                 window['play_but'].update(button_color='red')
 
                 # stop streaming
-                stream.stop_stream()
+                stream.start_stream()
 
         elif event == 'effect_dropdown':
             # TODO: other param
@@ -77,7 +77,7 @@ def play_effects(window):
         if play_sound:
             # TODO: still raise error with no overflow exception
             input_bytes = stream.read(BLOCKLEN, exception_on_overflow=False)
-            x = struct.unpack('h' * BLOCKLEN, input_bytes)
+            x = np.array(struct.unpack('h' * BLOCKLEN, input_bytes))
 
             # get output
             y = effect.cal_output(x)
