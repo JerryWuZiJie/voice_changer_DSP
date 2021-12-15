@@ -5,6 +5,8 @@ import os
 import winsound
 import platform
 import inspect
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
+from matplotlib.figure import Figure
 
 import PySimpleGUI as sg
 
@@ -72,7 +74,6 @@ def main(theme='Python'):
     gain_slider = sg.Slider(range=(0, 100), key='gain_slider', default_value=100, orientation='vertical', enable_events=True)
     gain_slider_text = sg.Text('gain', key='gain_slider_text')
     start_slider_frame = sg.Frame(layout=[[sg.Column([[gain_slider], [gain_slider_text]], element_justification='r')]], title='tunable values', size=(int(PIXEL_W/2), int(PIXEL_H*10)))
-    # TODO: canvas
     signal_plot = sg.Canvas(size=(int(PIXEL_W/2), int(PIXEL_H*10)), key='-CANVAS-')
     start_plot_frame = sg.Frame(layout=[[signal_plot]], title='signal plot')
     back_start_but = sg.Button('Back', key='back_start_but', pad=BUTTON_PAD_SIZE, size=(BUTTON_W, int(BUTTON_H/2)), border_width=0,
@@ -131,7 +132,6 @@ def main(theme='Python'):
                        resizable=True, element_justification='c', finalize=True, use_ttk_buttons=True)
 
     # ---------------pyaudio setup-----------------
-
     while True:
         event, values = window.read()
 
@@ -152,12 +152,7 @@ def main(theme='Python'):
         elif event == start_but.Key:  # go to start menu  # start the env, catch all error and save
             menu.update(visible=False)
             start_interface.update(visible=True)
-            UI_effects.play_effects(window)
-        elif event == back_start_but.Key:  # return from start menu
-            menu.update(visible=True)
-            start_interface.update(visible=False)
-        # go to other module to handle the subsystem
-        elif event == play_but.Key:
+
             try:
                 UI_effects.play_effects(window)
             except Exception as e:
@@ -169,6 +164,10 @@ def main(theme='Python'):
                          keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
                 # break the loop
                 break
+
+
+        # go to other module to handle the subsystem
+        # TODO: remove following
 
         else:
             if event == effect_dropdown.Key:
