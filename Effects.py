@@ -6,7 +6,7 @@ from scipy import signal
 
 
 class Effect:
-    changeable_params = []
+    changeable_params = ['frequency']
 
     def __init__(self, frequency, rate):
         """
@@ -201,12 +201,19 @@ class ButterWorth(Effect):
         self.prev_states = np.zeros_like(self.prev_states)
 
 
-class LPF(Effect):
-    pass
+class LPF(ButterWorth):
+    def __init__(self, frequency, rate):
+        super().__init__(frequency, rate, btype='lowpass')
 
 
-class HPF(Effect):
-    pass
+class HPF(ButterWorth):
+    def __init__(self, frequency, rate):
+        super().__init__(frequency, rate, btype='highpass')
+
+
+class BPF(ButterWorth):
+    def __init__(self, frequency, rate):
+        super().__init__(frequency, rate, btype='bandpass')
 
 
 class PP(Effect):
@@ -312,4 +319,6 @@ class Drunk(Effect):
 
 # get a list of all the effects
 effects_dict = dict(inspect.getmembers(sys.modules[__name__], inspect.isclass))
-del effects_dict[Effect.__name__]  # remove Effect from list, it is abstract
+# remove abstract class from the list
+del effects_dict[Effect.__name__]
+del effects_dict[ButterWorth.__name__]
