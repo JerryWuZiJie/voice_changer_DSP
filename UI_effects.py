@@ -40,12 +40,33 @@ def play_effects(window):
     effect = Effects.effects_dict[window['effect_dropdown'].get()](500, RATE)
 
     # ------------plotting setup--------------
+    frequency_domain = True
+    f_x_limit = [0, RATE/2]  # frequency domain y limit
+    t_x_limit = [0, BLOCKLEN]  # time domain y limit
+    f_y_limit = [0, RATE*20]
+    t_y_limit = [-32768, 32767]
+
+    # figure out which type of plot should be drawn
+    plot_type = None
+    if window['time_r'].get() is True:
+        plot_type = 't'
+    elif window['freq_r'].get() is True:
+        plot_type = 'f'
+    elif window['no_r'].get() is True:
+        plot_type = 'n'
+
     # draw the initial plot in the window
     fig = Figure(figsize=(5, 3))
     ax = fig.add_subplot(111)
     ax.grid()
-    ax.set_xlim([0, BLOCKLEN])
-    ax.set_ylim([-32768, 32767])
+    if plot_type == 'f':
+        ax.set_xlim(f_x_limit)
+        ax.set_ylim(f_y_limit)
+    elif plot_type == 't':
+        ax.set_xlim(t_x_limit)
+        ax.set_ylim(t_y_limit)
+    x_data = RATE / BLOCKLEN * np.arange(BLOCKLEN)
+    # else: no, nothing need to do
     fig_agg = FigureCanvasTkAgg(fig, window['-CANVAS-'].TKCanvas)
     fig_agg.draw()
     fig_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
@@ -56,10 +77,11 @@ def play_effects(window):
 
         event, values = window.read(timeout=1)
 
-        # windows closed or back to start menu
+        # no event
         if event == "__TIMEOUT__":
             pass
 
+        # windows closed or back to start menu
         elif event == sg.WIN_CLOSED or event == 'back_start_but':
             # stop streaming
             stream.stop_stream()
@@ -76,6 +98,7 @@ def play_effects(window):
                 fig_agg.get_tk_widget().pack_forget()
             break
 
+        # start applying effect and output sound
         elif event == 'play_but':
             if play_sound:  # before playing, now need to stop
                 play_sound = False
@@ -96,9 +119,18 @@ def play_effects(window):
                 # stop streaming
                 stream.start_stream()
 
+        # effect type is changed
         elif event == 'effect_dropdown':
             # TODO: other param
-            effect = Effects.effects_dict[window['effect_dropdown'].get()](500, RATE)
+            effect = Effects.effects_dict[window['effect_dropdown'].get()](1000, RATE)
+
+        # check which plot type is selected
+        elif event == 'time_r':
+            plot_type = 't'
+        elif event == 'freq_r':
+            plot_type = 'f'
+        elif event == 'no_r':
+            plot_type = 'n'
 
         if play_sound:
             input_bytes = stream.read(BLOCKLEN, exception_on_overflow=False)
@@ -117,8 +149,14 @@ def play_effects(window):
             # update plot
             ax.cla()  # clear the subplot
             ax.grid()  # draw the grid
-            ax.set_xlim([0, BLOCKLEN])
-            ax.set_ylim([-32768, 32767])
-            ax.plot(y, color='purple')
+            if plot_type == 'f':
+                ax.set_xlim(f_x_limit)
+                ax.set_ylim(f_y_limit)
+                ax.plot(x_data, np.abs(np.fft.fft(y)), color='purple')
+            elif plot_type == 't':
+                ax.set_xlim(t_x_limit)
+                ax.set_ylim(t_y_limit)
+                ax.plot(y, color='purple')
+
             fig_agg.draw()
 

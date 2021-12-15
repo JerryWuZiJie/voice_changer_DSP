@@ -71,11 +71,18 @@ def main(theme='Python'):
     # widget for effect (start) menu: play/stop button, effects dropdown menu, slider, graph for signal display
     play_but = sg.Button('Play', key='play_but', size=(int(BUTTON_W/3), int(BUTTON_H/2)), )
     effect_dropdown = sg.Combo(effects_list, key='effect_dropdown', default_value=effects_list[0], readonly=True, size=(int(BUTTON_W * 0.6)), enable_events=True)
+
+    # tunable value frame
     gain_slider = sg.Slider(range=(0, 100), key='gain_slider', default_value=100, orientation='vertical', enable_events=True)
     gain_slider_text = sg.Text('gain', key='gain_slider_text')
     start_slider_frame = sg.Frame(layout=[[sg.Column([[gain_slider], [gain_slider_text]], element_justification='r')]], title='tunable values', size=(int(PIXEL_W/2), int(PIXEL_H*10)))
+
+    # plot frame
+    time_r = sg.Radio('time', 'radio_group1', key='time_r', enable_events=True, default=True)
+    freq_r = sg.Radio('frequency', 'radio_group1', key='freq_r', enable_events=True)
+    no_r = sg.Radio('no', 'radio_group1', key='no_r', enable_events=True)
     signal_plot = sg.Canvas(size=(int(PIXEL_W/2), int(PIXEL_H*10)), key='-CANVAS-')
-    start_plot_frame = sg.Frame(layout=[[signal_plot]], title='signal plot')
+    start_plot_frame = sg.Frame(layout=[[sg.Column([[time_r, freq_r, no_r], [signal_plot]])]], title='signal plot')
     back_start_but = sg.Button('Back', key='back_start_but', pad=BUTTON_PAD_SIZE, size=(BUTTON_W, int(BUTTON_H/2)), border_width=0,
                                button_color=BACK_COLOR)
 
@@ -153,17 +160,20 @@ def main(theme='Python'):
             menu.update(visible=False)
             start_interface.update(visible=True)
 
-            try:
-                UI_effects.play_effects(window)
-            except Exception as e:
-                # save exception and popup a user window
-                with open('voice_changer log/' + "ERROR_" + str(int(time.time())) + '.txt', 'w') as f:
-                    f.write(traceback.format_exc())
-                winsound.PlaySound("ButtonClick.wav", 1)
-                sg.popup('An unexpected error occur during simulation! Error message saved', title='ERROR',
-                         keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
-                # break the loop
-                break
+            UI_effects.play_effects(window)
+
+            # TODO: enable this at the end
+            # try:
+            #     UI_effects.play_effects(window)
+            # except Exception as e:
+            #     # save exception and popup a user window
+            #     with open('voice_changer log/' + "ERROR_" + str(int(time.time())) + '.txt', 'w') as f:
+            #         f.write(traceback.format_exc())
+            #     winsound.PlaySound("ButtonClick.wav", 1)
+            #     sg.popup('An unexpected error occur during simulation! Error message saved', title='ERROR',
+            #              keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
+            #     # break the loop
+            #     break
 
 
         # go to other module to handle the subsystem
