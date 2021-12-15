@@ -66,11 +66,12 @@ def main(theme='Python'):
 
     menu = sg.Column(key='menu', layout=[[welcome_text], [start_but], [diy_but], [help_but], [exit_but]], element_justification='c')
 
-
     # --------------------------------
     # widget for effect (start) menu: play/stop button, effects dropdown menu, slider, graph for signal display
-    play_but = sg.Button('Play', key='play_but', size=(int(BUTTON_W/3), int(BUTTON_H/2)), )
+    play_but = sg.Button('Play', key='play_but', size=(int(BUTTON_W/3), int(BUTTON_H/2)))
     effect_dropdown = sg.Combo(effects_list, key='effect_dropdown', default_value=effects_list[0], readonly=True, size=(int(BUTTON_W * 0.6)), enable_events=True)
+    apply_but = sg.Button('Apply', key='apply_but', size=(int(BUTTON_W/3), int(BUTTON_H/2)))
+    input_parameters = sg.Input(key='input_parameters', size=(int(BUTTON_W*0.62), int(BUTTON_H/3)))
 
     # tunable value frame
     gain_slider = sg.Slider(range=(0, 100), key='gain_slider', default_value=100, orientation='vertical', enable_events=True)
@@ -86,15 +87,13 @@ def main(theme='Python'):
     back_start_but = sg.Button('Back', key='back_start_but', pad=BUTTON_PAD_SIZE, size=(BUTTON_W, int(BUTTON_H/2)), border_width=0,
                                button_color=BACK_COLOR)
 
-    start_interface = sg.Column(key='start_interface', layout=[[play_but, effect_dropdown], [start_slider_frame, start_plot_frame], [back_start_but]], element_justification='c', visible=False)
+    start_interface = sg.Column(key='start_interface', layout=[[play_but, effect_dropdown], [apply_but, input_parameters], [start_slider_frame, start_plot_frame], [back_start_but]], element_justification='c', visible=False)
 
+    # --------------------------------
     # widget for help menu
     back_help_but_t = sg.Button("Back", key='back_h_t', pad=BUTTON_PAD_SIZE, size=(BUTTON_SIZE[0], BUTTON_SIZE[1] // 2),
                                 border_width=0, button_color=BACK_COLOR)
 
-
-    # --------------------------------
-    # widget for help menu
     instruction_info = []
     instruction_info.append([sg.Text("Warning: user data will be collected, but no private info will be collected\n"
                                      "All the collected data can be viewed in 'voice_changer log' folder",

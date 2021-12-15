@@ -1,4 +1,5 @@
 import struct
+import re
 
 import PySimpleGUI as sg
 import numpy as np
@@ -36,9 +37,6 @@ def play_effects(window):
     # keep an original copy of the play button color if color changed
     original_pBut_color = window['play_but'].ButtonColor
 
-    # ------------effect setup-------------- (TODO: frequency)
-    effect = Effects.effects_dict[window['effect_dropdown'].get()](500, RATE)
-
     # ------------plotting setup--------------
     frequency_domain = True
     f_x_limit = [0, RATE/2]  # frequency domain y limit
@@ -71,6 +69,35 @@ def play_effects(window):
     fig_agg.draw()
     fig_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
 
+    #------------effect setup--------------
+    # display default input arguments in the input bar
+    effect_class = Effects.effects_dict[window['effect_dropdown'].get()]
+    window['input_parameters'].update(effect_class.default_input)
+
+    def update_effect(change):
+        effect_class = Effects.effects_dict[window['effect_dropdown'].get()]
+        if change:  # change value in input bar
+            attrs = effect_class.default_input
+            window['input_parameters'].update(effect_class.default_input)
+        else:  # get value from input bar
+            attrs = window['input_parameters'].get()
+        # setup effect according to the input bar
+        attrs = attrs.split("#", 1)[0]  # ignore after comments
+        attrs = re.findall(r"\d+\.?\d*", attrs)  # get all numeric values
+        # turn str to int/float
+        attr_list = []
+        for attr in attrs:
+            try:
+                attr_list.append(int(attr))
+            except ValueError:
+                attr_list.append(float(attr))
+        if attr_list:
+            new_effect = effect_class(attr_list[0], RATE, *attr_list[1:])
+        else:  # this shouldn't happen unless user input is incorrect
+            # print in red
+            print('\033[91m' + 'Warning: the input is invalid' + '\033[0m')
+            new_effect = effect_class(200, RATE)
+        return new_effect
 
     # ------------event loop--------------
     while True:
@@ -100,7 +127,7 @@ def play_effects(window):
 
         # start applying effect and output sound
         elif event == 'play_but':
-            if play_sound:  # before playing, now need to stop
+            if play_sound:  # before was playing, now need to stop
                 play_sound = False
 
                 # change display text
@@ -109,7 +136,8 @@ def play_effects(window):
 
                 # start streaming
                 stream.stop_stream()
-            else:  # before stop, now need to play
+            else:  # before was stopped, now need to play
+                effect = update_effect(change=False)
                 play_sound = True
 
                 # change display text
@@ -121,8 +149,11 @@ def play_effects(window):
 
         # effect type is changed
         elif event == 'effect_dropdown':
-            # TODO: other param
-            effect = Effects.effects_dict[window['effect_dropdown'].get()](1000, RATE)
+            effect = update_effect(change=True)
+
+        # when apply is pressed, apply new effect
+        elif event == 'apply_but':
+            effect = update_effect(change=False)
 
         # check which plot type is selected
         elif event == 'time_r':
