@@ -6,7 +6,8 @@ from scipy import signal
 
 
 class Effect:
-    changeable_params = ['frequency']
+    # the default input argument (exclude rate), all should be float
+    default_input = "frequency=200"
 
     def __init__(self, frequency, rate):
         """
@@ -15,8 +16,17 @@ class Effect:
         @param np.array frequency: normalized frequency
         """
         self.rate = rate
-        self.frequency = frequency / self.rate
-        self.n = 0  # TODO: what if self.n keep getting larger?
+        self.frequency = frequency / int(self.rate/2)  # use nyquist frequency
+        if isinstance(self.frequency, np.ndarray):
+            for i in range(len(self.frequency)):
+                if self.frequency[i] >= 1:
+                    print('\033[91m' + 'Warning: maximum frequency exceeded, tune to smaller frequency' + '\033[0m')
+                    self.frequency[i] = 0.999
+                    print(self.frequency)
+        elif self.frequency >= 1:
+            print('\033[91m' + 'Warning: maximum frequency exceeded, tune to smaller frequency' + '\033[0m')
+            self.frequency = 0.999
+        self.n = 0  # notice: if play for too long, this can grow very large
 
     def cal_output(self, x):
         """
@@ -35,17 +45,10 @@ class Effect:
         """
         self.n = 0
 
-    def update(self, param, value):
-        """
-        update user changeable parameters
-        @param param:
-        @param value:
-        @return:
-        """
-        pass
-
 
 class NoEffect(Effect):
+    default_input = "# no tunable parameters"
+
     def cal_output(self, x):
         return x
 
@@ -67,6 +70,8 @@ class AM(Effect):
 
 
 class ComplexAM(Effect):
+    default_input = "frequency=200, order=6  # order should be between 1 to 10"
+
     def __init__(self, frequency, rate, order=6):
         super().__init__(frequency, rate)
         # TODO: how to choose Rp, Rs, and edge for elliptic filter?
@@ -107,6 +112,8 @@ class Delay(Effect):
 
 
 class Vibrato(Effect):
+    default_input = "frequency=2, T=0.5, W=0.02  # T>=W, can be decimal"
+
     def __init__(self, frequency, rate, delay=0.5, vary_delay=0.02):
         """
 
@@ -128,7 +135,7 @@ class Vibrato(Effect):
     def cal_output(self, x):
         def cal_singe_output(single_input):
             """
-            helper funciton for calculating single output
+            helper function for calculating single output
 
             @param int single_input: single bit sound input
             @return float output: single bit sound output
@@ -168,6 +175,7 @@ class ButterWorth(Effect):
     """
     this is more like a wrapper for the scipy signal.butter function, for consistence we decide to make it into the child class of Effect
     """
+    default_input = "frequency=200, order=5, btype='lowpass'"
 
     def __init__(self, frequency, rate, order=5, btype='lowpass'):
         """
@@ -179,8 +187,7 @@ class ButterWorth(Effect):
         """
         super().__init__(frequency, rate)
 
-        # normalized frequency * 2 since signal.butter use Nyquist frequency as normalization constant
-        self.b, self.a = signal.butter(order, self.frequency * 2, btype)
+        self.b, self.a = signal.butter(order, self.frequency, btype)
         self.prev_states = np.zeros(len(self.b) - 1)
 
     def cal_output(self, x):
@@ -202,18 +209,24 @@ class ButterWorth(Effect):
 
 
 class LPF(ButterWorth):
+    default_input = "frequency=200"
+
     def __init__(self, frequency, rate):
         super().__init__(frequency, rate, btype='lowpass')
 
 
 class HPF(ButterWorth):
+    default_input = "frequency=200"
+
     def __init__(self, frequency, rate):
         super().__init__(frequency, rate, btype='highpass')
 
 
 class BPF(ButterWorth):
-    def __init__(self, frequency, rate):
-        super().__init__(frequency, rate, btype='bandpass')
+    default_input = "freq_l=200, freq_h=1000)  # first fl < second fh"
+
+    def __init__(self, frequency1, rate, frequency2):
+        super().__init__(np.array([frequency1, frequency2]), rate, btype='bandpass')
 
 
 class PP(Effect):

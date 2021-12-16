@@ -1,4 +1,5 @@
 import struct
+import re
 
 import PySimpleGUI as sg
 import numpy as np
@@ -21,7 +22,6 @@ def play_effects(window):
     # pysimplegui window passed in
 
     # ------------pyaudio setup--------------
-
     # Open the audio output stream
     p = pyaudio.PyAudio()
     stream = p.open(format=p.get_format_from_width(WIDTH),
@@ -34,10 +34,7 @@ def play_effects(window):
     play_sound = False
 
     # keep an original copy of the play button color if color changed
-    original_pBut_color = window['play_but'].ButtonColor
-
-    # ------------effect setup-------------- (TODO: frequency)
-    effect = Effects.effects_dict[window['effect_dropdown'].get()](500, RATE)
+    original_play_color = window['play_but'].ButtonColor
 
     # ------------plotting setup--------------
     frequency_domain = True
@@ -56,26 +53,70 @@ def play_effects(window):
         plot_type = 'n'
 
     # draw the initial plot in the window
-    fig = Figure(figsize=(5, 3))
+    fig = Figure(figsize=(6, 4))
     ax = fig.add_subplot(111)
     ax.grid()
+    # frequency domain
     if plot_type == 'f':
         ax.set_xlim(f_x_limit)
         ax.set_ylim(f_y_limit)
+    # time domain
     elif plot_type == 't':
         ax.set_xlim(t_x_limit)
         ax.set_ylim(t_y_limit)
+    # else: no, need to do nothing
     x_data = RATE / BLOCKLEN * np.arange(BLOCKLEN)
-    # else: no, nothing need to do
     fig_agg = FigureCanvasTkAgg(fig, window['-CANVAS-'].TKCanvas)
     fig_agg.draw()
     fig_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
 
+    # ------------effect setup--------------
+    # display default input arguments in the input bar
+    effect_class = Effects.effects_dict[window['effect_dropdown'].get()]
+    window['input_parameters'].update(effect_class.default_input)
+
+    def update_effect(change):
+        """
+        update effect based on input bar and dropdown selection menu
+        @param change: bool type. If True, change value in the input bar; If
+        False, get value from input bar
+        @return: Effect object
+        """
+        # get class type and input parameters in string
+        effect_class = Effects.effects_dict[window['effect_dropdown'].get()]
+        if change:  # change value in input bar
+            attrs = effect_class.default_input
+            window['input_parameters'].update(effect_class.default_input)
+        else:  # get value from input bar
+            attrs = window['input_parameters'].get()
+
+        # setup effect according to the input bar
+        # parse the input
+        attrs = attrs.split("#", 1)[0]  # ignore after comments
+        attrs = re.findall(r"\d+\.?\d*", attrs)  # get all numeric values
+        # turn str to int/float
+        attr_list = []
+        for attr in attrs:
+            try:
+                attr_list.append(int(attr))
+            except ValueError:
+                attr_list.append(float(attr))
+
+        # create effect object
+        if attr_list:
+            new_effect = effect_class(attr_list[0], RATE, *attr_list[1:])
+        else:  # this shouldn't happen unless user input is incorrect
+            # print in red
+            print('\033[91m' + 'Warning: the input is invalid' + '\033[0m')
+            # create a default class
+            new_effect = effect_class(200, RATE)
+
+        return new_effect
 
     # ------------event loop--------------
     while True:
 
-        event, values = window.read(timeout=1)
+        event, values = window.read(timeout=1)  # timeout with 0.01s
 
         # no event
         if event == "__TIMEOUT__":
@@ -90,26 +131,27 @@ def play_effects(window):
             if event == 'back_start_but':
                 # reset visibility
                 window['menu'].update(visible=True)
-                window['start_interface'].update(visible=False)
+                window['start_menu'].update(visible=False)
                 # change display text in case for reopen next time
                 window['play_but'].update('Play')
-                window['play_but'].update(button_color=original_pBut_color)
+                window['play_but'].update(button_color=original_play_color)
                 # remove plot
                 fig_agg.get_tk_widget().pack_forget()
             break
 
         # start applying effect and output sound
         elif event == 'play_but':
-            if play_sound:  # before playing, now need to stop
+            if play_sound:  # before was playing, now need to stop
                 play_sound = False
 
                 # change display text
                 window['play_but'].update('Play')
-                window['play_but'].update(button_color=original_pBut_color)
+                window['play_but'].update(button_color=original_play_color)
 
                 # start streaming
                 stream.stop_stream()
-            else:  # before stop, now need to play
+            else:  # before was stopped, now need to play
+                effect = update_effect(change=False)
                 play_sound = True
 
                 # change display text
@@ -121,8 +163,11 @@ def play_effects(window):
 
         # effect type is changed
         elif event == 'effect_dropdown':
-            # TODO: other param
-            effect = Effects.effects_dict[window['effect_dropdown'].get()](1000, RATE)
+            effect = update_effect(change=True)
+
+        # when apply is pressed, apply new effect
+        elif event == 'apply_but':
+            effect = update_effect(change=False)
 
         # check which plot type is selected
         elif event == 'time_r':
