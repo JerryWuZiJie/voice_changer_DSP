@@ -16,7 +16,16 @@ class Effect:
         @param np.array frequency: normalized frequency
         """
         self.rate = rate
-        self.frequency = frequency / self.rate
+        self.frequency = frequency / int(self.rate/2)  # use nyquist frequency
+        if isinstance(self.frequency, np.ndarray):
+            for i in range(len(self.frequency)):
+                if self.frequency[i] >= 1:
+                    print('\033[91m' + 'Warning: maximum frequency exceeded, tune to smaller frequency' + '\033[0m')
+                    self.frequency[i] = 0.999
+                    print(self.frequency)
+        elif self.frequency >= 1:
+            print('\033[91m' + 'Warning: maximum frequency exceeded, tune to smaller frequency' + '\033[0m')
+            self.frequency = 0.999
         self.n = 0  # notice: if play for too long, this can grow very large
 
     def cal_output(self, x):
@@ -178,8 +187,7 @@ class ButterWorth(Effect):
         """
         super().__init__(frequency, rate)
 
-        # normalized frequency * 2 since signal.butter use Nyquist frequency as normalization constant
-        self.b, self.a = signal.butter(order, self.frequency * 2, btype)
+        self.b, self.a = signal.butter(order, self.frequency, btype)
         self.prev_states = np.zeros(len(self.b) - 1)
 
     def cal_output(self, x):
