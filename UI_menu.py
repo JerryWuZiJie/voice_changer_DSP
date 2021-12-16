@@ -2,7 +2,7 @@ import sys
 import traceback
 import time
 import os
-import winsound
+# import winsound
 import platform
 import inspect
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
