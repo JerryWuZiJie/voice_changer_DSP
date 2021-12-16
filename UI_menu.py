@@ -136,50 +136,31 @@ def main(theme='Python'):
     back_help_but_t = sg.Button("Back", key='back_h_t', pad=BUTTON_PAD_SIZE,
                                 size=(BUTTON_SIZE[0], BUTTON_SIZE[1] // 2),
                                 border_width=0, button_color=BACK_COLOR)
-
-    instruction_info = []
-    instruction_info.append([sg.Text(
-        "Warning: user data will be collected, but no private info will be collected\n"
-        "All the collected data can be viewed in 'voice_changer log' folder",
-        text_color='red', font=(DEFAULT_FONT, int(DEFAULT_FONT_SIZE * 1.5)),
-        justification='l')])
-    instruction_info.append([sg.Text(
-        'User ID: type in the main menu your user id and click enter, only need to do it once TODO: specify the format of user id',
-        font=(DEFAULT_FONT, int(DEFAULT_FONT_SIZE * 1.2)), justification='l',
-        size=HELP_TEXT_SIZE)])
-    instruction_info.append([sg.Text(
-        'Start Menu: the Start Menu has two options, they are almost the same with slight difference',
-        font=(DEFAULT_FONT, int(DEFAULT_FONT_SIZE * 1.2)), justification='l',
-        size=HELP_TEXT_SIZE)])
-    instruction_info.append([sg.Text(
-        "Train: reward showed for each step (for more details scroll below to 'Simulation' section). Only use 'Train' when you getting start, once you're familiar with the environment, use 'Test'\n"
-        "\nTest: your control will be collected and used as baseline",
-        text_color='white', justification='l', size=HELP_TEXT_SIZE)])
-    instruction_info.append([sg.Text(
-        'Help Menu: you are viewing the Help Menu now',
-        font=(DEFAULT_FONT, int(DEFAULT_FONT_SIZE * 1.2)), justification='l',
-        size=HELP_TEXT_SIZE)])
-    instruction_info.append([sg.Text(
-        'Simulation: when you click on Train/Test in Start Menu',
-        font=(DEFAULT_FONT, int(DEFAULT_FONT_SIZE * 1.2)), justification='l',
-        size=HELP_TEXT_SIZE)])
-    instruction_info.append([sg.Text(
-        "The following image indicates what the window looks like when you start simulation",
-        text_color='white', justification='l', size=HELP_TEXT_SIZE)])
-    instruction_info.append([sg.Text(
-        "If you press 'pickup' button and nothing happened, you might be too far away from the object, try getting closer\n"
-        "If you press 'drop' and nothing happened, there might be not enough space in front of you",
-        text_color='white', justification='l', size=HELP_TEXT_SIZE)])
-    instruction_info.append([])
-    instruction_info.append([])
-
-    # help_col = sg.Column(layout=[[help_text2]], element_justification='c', visible=True, scrollable=True, size=(800, 300))
+    instruction = "This is the instruction for how to use this program\n\n" \
+                  "There are four buttons on startup menu: Start, DIY effect," \
+                  "Help, and Exit\n" \
+                  "\n\n>>> Start:\n" \
+                  "The start menu let you play the sound effect.\n" \
+                  "You can choose effect from the dropdown menu, and change " \
+                  "parameters for the effect in the input bar.\n" \
+                  "You can show the sound signal in time domain and frequency" \
+                  "domain. If the voice sound laggy, choose no to turn off" \
+                  "plotting might help.\n" \
+                  "\n\n>>> DIY effect\n" \
+                  "TODO: this is still under development\n" \
+                  "\n\n>>> Help\n" \
+                  "This is the help menu you are looking at.\n" \
+                  "\n\n>>> Exit\n" \
+                  "Press this button will exit the program. You could also" \
+                  "click 'x' on top right corner to close the program.\n"
+    instruction_info = sg.Multiline(instruction, size=(BUTTON_W, BUTTON_H * 9),
+                                    disabled=True, no_scrollbar=True)
     back_help_but_b = sg.Button('Back', key='back_h_b', pad=BUTTON_PAD_SIZE,
-                                size=(BUTTON_SIZE[0], BUTTON_SIZE[1] // 2),
+                                size=(BUTTON_W, BUTTON_H // 2),
                                 border_width=0, button_color=BACK_COLOR)
 
     help_menu = sg.Column(
-        layout=[[back_help_but_t], *instruction_info, [back_help_but_b]],
+        layout=[[back_help_but_t], [instruction_info], [back_help_but_b]],
         element_justification='c',
         visible=False, size=COLUMN_SIZE)
 
