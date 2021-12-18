@@ -85,6 +85,9 @@ def main(theme='Python'):
                           size=(int(BUTTON_W / 3), int(BUTTON_H / 2)))
     input_parameters = sg.Input(key='input_parameters',
                                 size=(int(BUTTON_W * 0.62), int(BUTTON_H / 3)))
+    # the change will apply by pressing enter
+    apply_enter = sg.Button('Apply', key='apply_enter', visible=False,
+                            bind_return_key=True)
 
     # tunable value frame
     gain_slider = sg.Slider(range=(0, 100), key='gain_slider',
@@ -116,7 +119,7 @@ def main(theme='Python'):
 
     start_menu = sg.Column(key='start_menu',
                            layout=[[play_but, effect_dropdown],
-                                   [apply_but, input_parameters],
+                                   [apply_but, input_parameters, apply_enter],
                                    [start_slider_frame, start_plot_frame],
                                    [back_start_but]], element_justification='c',
                            visible=False, size=COLUMN_SIZE)
