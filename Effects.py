@@ -267,23 +267,22 @@ class PP(Effect):
 
 
 class Echo(Effect):
-    default_input = "frequency=200, dly_in_sec=0.2, gain=2"
+    default_input = "frequency=200, dly_in_sec=0.2, gain=0.5"
 
-    def __init__(self, frequency, rate, num_dly=4, dly_in_sec=0.2, gain=2):
+    def __init__(self, frequency, rate, dly_in_sec=0.2, gain=0.5):
         super().__init__(frequency, rate)
         self.gain = gain
         self.dly_in_samp = int(dly_in_sec * rate)
+        self.buffer = np.zeros(self.dly_in_samp)
+        self.k = 0
 
     def cal_output(self, x):
         output = np.zeros(len(x)).astype(int)
-        buffer = np.zeros(self.dly_in_samp)
-
-        k = 0
         for i, x_i in enumerate(x):
-            y_i = int(x_i + self.gain * buffer[k])
+            y_i = int(x_i + self.gain * self.buffer[self.k])
             output[i] = y_i
-            buffer[k] = x_i
-            k = (k + 1) % self.dly_in_samp
+            self.buffer[self.k] = x_i
+            self.k = (self.k + 1) % self.dly_in_samp
 
         return output
 
@@ -328,17 +327,16 @@ class Drunk(Effect):
     def __init__(self, frequency, rate, delay_sec=0.2):
         super().__init__(frequency, rate)
         self.bufferLen = int(delay_sec * rate)
+        self.buffer = self.bufferLen * [0]
+        self.k = 0
 
     def cal_output(self, x):
         output = np.zeros(x.shape[0])
-        buffer = self.bufferLen * [0]
-
-        k = 0
         for i, x_i in enumerate(x):
-            y_i = x_i * np.cos(i) + x_i * np.sin(i) + buffer[k]
+            y_i = x_i * np.cos(i) + x_i * np.sin(i) + self.buffer[self.k]
             output[i] = y_i
-            buffer[k] = x_i
-            k = (k + 1) % self.bufferLen
+            self.buffer[self.k] = x_i
+            self.k = (self.k + 1) % self.bufferLen
 
         return output
 

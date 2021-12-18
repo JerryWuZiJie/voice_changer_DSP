@@ -41,19 +41,6 @@ def main(theme='Python'):
     # set GUI theme
     sg.theme(theme)
 
-    # directory to save log file
-    if not os.path.isdir("voice_changer log"):
-        os.makedirs("voice_changer log")
-
-    # file to save user setting
-    sg.user_settings_filename(path='./voice_changer log')
-
-    # log user system type
-    if not sg.user_settings_get_entry('system_info', None):
-        sg.user_settings_set_entry('system_info',
-                                   str(platform.system()) + ' ' + str(
-                                       platform.release()))
-
     # ---------------main menu-----------------
     # widget for main menu: display text, voice changer, help menu, exit
     welcome_text = sg.Text("Voice Changer", text_color='white',
