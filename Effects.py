@@ -281,7 +281,7 @@ class Echo(Effect):
         for i, x_i in enumerate(x):
             y_i = int(x_i + self.gain * self.buffer[self.k])
             output[i] = y_i
-            self.buffer[self.k] = x_i
+            self.buffer[self.k] = y_i
             self.k = (self.k + 1) % self.dly_in_samp
 
         return output
