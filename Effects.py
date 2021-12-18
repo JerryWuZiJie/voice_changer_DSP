@@ -223,23 +223,25 @@ class HPF(ButterWorth):
 
 
 class BPF(ButterWorth):
-    default_input = "freq_l=200, freq_h=1000)  # first fl < second fh"
+    default_input = "frequency=200, freq_l=200, freq_h=1000)  # first fl < second fh"
 
     def __init__(self, frequency1, rate, frequency2):
         super().__init__(np.array([frequency1, frequency2]), rate, btype='bandpass')
 
 
 class PP(Effect):
-    def __init__(self, rate, frequency, a=(1, 1), b=(0.7, 0.7), c=(1, 1),
+    default_input = "a1=1, a2=1, b1=0.7, b2=0.7, c1=1, c2=1, delay_sec=0.2"
+
+    def __init__(self, rate, frequency, a1=1, a2=1, b1=0.7, b2=0.7, c1=1, c2=1,
                  delay_sec=0.2):
         super().__init__(frequency, rate)
 
         self.N = int(rate * delay_sec)
         self.buffer1 = self.N * [0]
         self.buffer2 = self.N * [0]
-        self.a1, self.a2 = a
-        self.b1, self.b2 = b
-        self.c1, self.c2 = c
+        self.a1, self.a2 = a1, a2
+        self.b1, self.b2 = b1, b2
+        self.c1, self.c2 = c1, c2
 
     def cal_output(self, x):
         k = 0
@@ -265,11 +267,12 @@ class PP(Effect):
 
 
 class Echo(Effect):
+    default_input = "frequency=200, dly_in_sec=0.2, gain=2"
+
     def __init__(self, frequency, rate, num_dly=4, dly_in_sec=0.2, gain=2):
         super().__init__(frequency, rate)
         self.gain = gain
         self.dly_in_samp = int(dly_in_sec * rate)
-        self.num_dly = num_dly
 
     def cal_output(self, x):
         output = np.zeros(len(x)).astype(int)
@@ -286,17 +289,20 @@ class Echo(Effect):
 
 
 class Alien(Effect):
-    def __init__(self, frequency, rate, dly_in_sec=0.2):
+    default_input = "frequency=200, dly_in_sec=0.2, delay_gain=1"
+
+    def __init__(self, frequency, rate, dly_in_sec=0.2, delay_gain=1):
         super().__init__(frequency, rate)
 
         self.bufferLen = int(rate * dly_in_sec)
+        self.delay_gain = delay_gain
 
     def cal_output(self, x):
         output = np.zeros(len(x))
         buffer = self.bufferLen * [0]
         k = 0
         for i, x_i in enumerate(x):
-            output[i] = x_i * np.cos(2 * np.pi * 0.6 * i)
+            output[i] = x_i * np.cos(2 * np.pi * 0.6 * i) + self.delay_gain * buffer[k]
             buffer[k] = output[i]
             k = (k + 1) % len(buffer)
 
@@ -304,26 +310,36 @@ class Alien(Effect):
 
 
 class Autobots(Effect):
+    default_input = "frequency=200, low_freq=0.1, high_freq=0.2 # 0 < low_freq < high_freq < 1"
+
     def __init__(self, frequency, rate, low_freq=0.1, high_freq=0.2):
         super().__init__(frequency, rate)
         self.cutoff_freq = [low_freq, high_freq]
 
     def cal_output(self, x):
         b, a = signal.butter(4, self.cutoff_freq, 'bandpass')
+        
         output = signal.filtfilt(b, a, x)
         return output
 
 class Drunk(Effect):
-    def __init__(self, frequency, rate):
-        self.freq = frequency
-        self.rate = rate
+    default_input = "frequency=200, delay_sec=0.2"
+
+    def __init__(self, frequency, rate, delay_sec=0.2):
+        super().__init__(frequency, rate)
+        self.bufferLen = int(delay_sec * rate)
 
     def cal_output(self, x):
         output = np.zeros(x.shape[0])
+        buffer = self.bufferLen * [0]
 
+        k = 0
         for i, x_i in enumerate(x):
-            y_i = x_i * np.cos(i) + x_i * np.sin(i)
+            y_i = x_i * np.cos(i) + x_i * np.sin(i) + buffer[k]
             output[i] = y_i
+            buffer[k] = x_i
+            k = (k + 1) % self.bufferLen
+
         return output
 
 # get a list of all the effects
