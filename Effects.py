@@ -107,10 +107,6 @@ class ComplexAM(Effect):
         self.prev_states = np.zeros(self.prev_states)
 
 
-class Delay(Effect):
-    pass
-
-
 class Vibrato(Effect):
     default_input = "frequency=2, T=0.5, W=0.02  # T>=W, can be decimal"
 
