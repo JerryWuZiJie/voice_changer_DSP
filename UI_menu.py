@@ -2,7 +2,6 @@ import sys
 import traceback
 import time
 import os
-# import winsound
 import platform
 import inspect
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
@@ -160,21 +159,14 @@ def main(theme='Python'):
         elif event == start_but.Key:  # go to start menu
             menu.update(visible=False)
             start_menu.update(visible=True)
-
-            UI_effects.play_effects(window)
-
-            # TODO: enable the following after test
-            # try:
-            #     UI_effects.play_effects(window)
-            # except Exception as e:
-            #     # save exception and popup a user window
-            #     with open('voice_changer log/' + "ERROR_" + str(int(time.time())) + '.txt', 'w') as f:
-            #         f.write(traceback.format_exc())
-            #     winsound.PlaySound("ButtonClick.wav", 1)
-            #     sg.popup('An unexpected error occur during simulation! Error message saved', title='ERROR',
-            #              keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
-            #     # break the loop
-            #     break
+            try:
+                UI_effects.play_effects(window)
+            except Exception as e:
+                # popup error message
+                sg.popup('An unexpected error occur during simulation! Error message: '+str(e), title='ERROR',
+                         keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
+                # break the loop
+                break
 
         # -------------help menu-------------
         elif event == help_but.Key:  # go to help menu
@@ -189,10 +181,6 @@ def main(theme='Python'):
         elif event == exit_but.Key:
             window.close()
             break
-
-        # TODO: remove the following after test
-        else:
-            print(event, values)
 
 
 if __name__ == '__main__':
