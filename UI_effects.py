@@ -38,9 +38,9 @@ def play_effects(window):
 
     # ------------plotting setup--------------
     frequency_domain = True
-    f_x_limit = [0, RATE/2]  # frequency domain y limit
+    f_x_limit = [0, RATE / 2]  # frequency domain y limit
     t_x_limit = [0, BLOCKLEN]  # time domain y limit
-    f_y_limit = [0, RATE*20]
+    f_y_limit = [0, RATE * 20]
     t_y_limit = [-32768, 32767]
 
     # figure out which type of plot should be drawn
@@ -75,16 +75,16 @@ def play_effects(window):
     effect_class = Effects.effects_dict[window['effect_dropdown'].get()]
     window['input_parameters'].update(effect_class.default_input)
 
-    def update_effect(change):
+    def update_effect(change_input, old_effect=None):
         """
         update effect based on input bar and dropdown selection menu
-        @param change: bool type. If True, change value in the input bar; If
+        @param change_input: bool type. If True, change value in the input bar; If
         False, get value from input bar
         @return: Effect object
         """
         # get class type and input parameters in string
         effect_class = Effects.effects_dict[window['effect_dropdown'].get()]
-        if change:  # change value in input bar
+        if change_input:  # change value in input bar
             attrs = effect_class.default_input
             window['input_parameters'].update(effect_class.default_input)
         else:  # get value from input bar
@@ -104,14 +104,29 @@ def play_effects(window):
 
         # create effect object
         if attr_list:
-            new_effect = effect_class(attr_list[0], RATE, *attr_list[1:])
-        else:  # this shouldn't happen unless user input is incorrect
-            # print in red
-            print('\033[91m' + 'Warning: the input is invalid' + '\033[0m')
-            # create a default class
-            new_effect = effect_class(200, RATE)
+            try:
+                new_effect = effect_class(attr_list[0], RATE, *attr_list[1:])
+                return new_effect
+            except TypeError as te:  # user input incorrect
+                sg.popup(
+                    str(te),
+                    title='ERROR',
+                    keep_on_top=True, button_color=('white', 'red'),
+                    grab_anywhere=True,
+                    non_blocking=True)
+        else:  # user input is incorrect
+            # popup error window
+            sg.popup(
+                'No parameters provided',
+                title='ERROR',
+                keep_on_top=True, button_color=('white', 'red'),
+                grab_anywhere=True,
+                non_blocking=True)
 
-        return new_effect
+        # some error occur, return orginal effect
+        return old_effect
+
+    effect = update_effect(change_input=False)
 
     # ------------event loop--------------
     while True:
@@ -151,7 +166,7 @@ def play_effects(window):
                 # start streaming
                 stream.stop_stream()
             else:  # before was stopped, now need to play
-                effect = update_effect(change=False)
+                effect = update_effect(change_input=False, old_effect=effect)
                 play_sound = True
 
                 # change display text
@@ -163,11 +178,13 @@ def play_effects(window):
 
         # effect type is changed
         elif event == 'effect_dropdown':
-            effect = update_effect(change=True)
+            effect = update_effect(change_input=True, old_effect=effect)
 
-        # when apply is pressed, apply new effect
+        # when apply is pressed or enter is pressed, apply new effect
         elif event == 'apply_but':
-            effect = update_effect(change=False)
+            effect = update_effect(change_input=False, old_effect=effect)
+        elif event == 'apply_enter':
+            effect = update_effect(change_input=False, old_effect=effect)
 
         # check which plot type is selected
         elif event == 'time_r':
@@ -182,7 +199,8 @@ def play_effects(window):
             x = np.array(struct.unpack('h' * BLOCKLEN, input_bytes))
 
             # get output
-            y = effect.cal_output(x) * (window['gain_slider'].TKIntVar.get()/100)
+            y = effect.cal_output(x) * (
+                    window['gain_slider'].TKIntVar.get() / 100)
 
             # Convert numeric list to binary data
             y = np.clip(np.array(y, np.int), -32768, 32767)
@@ -204,4 +222,3 @@ def play_effects(window):
                 ax.plot(y, color='purple')
 
             fig_agg.draw()
-
