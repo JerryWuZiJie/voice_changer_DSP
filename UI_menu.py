@@ -48,8 +48,6 @@ def main(theme='Python'):
                            justification='l')
     start_but = sg.Button('Start', key='start_but', pad=BUTTON_PAD_SIZE,
                           size=BUTTON_SIZE, border_width=0)
-    diy_but = sg.Button('DIY effect', key='diy_but', pad=BUTTON_PAD_SIZE,
-                        size=BUTTON_SIZE, border_width=0)
     help_but = sg.Button('Help', key='help_but', pad=BUTTON_PAD_SIZE,
                          size=BUTTON_SIZE, border_width=0)
     exit_but = sg.Button('Exit', key='exit_but', pad=BUTTON_PAD_SIZE,
@@ -57,7 +55,7 @@ def main(theme='Python'):
                          button_color=BACK_COLOR)
 
     menu = sg.Column(key='menu',
-                     layout=[[welcome_text], [start_but], [diy_but], [help_but],
+                     layout=[[welcome_text], [start_but], [help_but],
                              [exit_but]], element_justification='c',
                      size=COLUMN_SIZE)
 
@@ -111,23 +109,13 @@ def main(theme='Python'):
                                    [back_start_but]], element_justification='c',
                            visible=False, size=COLUMN_SIZE)
 
-    # ---------------DIY effect menu-----------------
-    # widget for DIY effect menu: TODO, back button
-    back_diy_but = sg.Button("Back", key='back_diy_but', pad=BUTTON_PAD_SIZE,
-                             size=(BUTTON_SIZE[0], BUTTON_SIZE[1] // 2),
-                             border_width=0, button_color=BACK_COLOR)
-
-    diy_menu = sg.Column(key='diy_menu', layout=[[back_diy_but]],
-                         element_justification='c', visible=False,
-                         size=COLUMN_SIZE)
-
     # ---------------help menu-----------------
     # widget for help menu: back button, text blocks, back button
     back_help_but_t = sg.Button("Back", key='back_h_t', pad=BUTTON_PAD_SIZE,
                                 size=(BUTTON_SIZE[0], BUTTON_SIZE[1] // 2),
                                 border_width=0, button_color=BACK_COLOR)
     instruction = "This is the instruction for how to use this program\n\n" \
-                  "There are four buttons on startup menu: Start, DIY effect," \
+                  "There are four buttons on startup menu: Start," \
                   "Help, and Exit\n" \
                   "\n\n>>> Start:\n" \
                   "The start menu let you play the sound effect.\n" \
@@ -136,8 +124,6 @@ def main(theme='Python'):
                   "You can show the sound signal in time domain and frequency" \
                   "domain. If the voice sound laggy, choose no to turn off" \
                   "plotting might help.\n" \
-                  "\n\n>>> DIY effect\n" \
-                  "TODO: this is still under development\n" \
                   "\n\n>>> Help\n" \
                   "This is the help menu you are looking at.\n" \
                   "\n\n>>> Exit\n" \
@@ -156,7 +142,6 @@ def main(theme='Python'):
 
     # start the window, all widget should be initialized before this
     window = sg.Window("Voice Changer", layout=[[sg.pin(menu, shrink=True)],
-                                                [sg.pin(diy_menu, shrink=True)],
                                                 [sg.pin(help_menu,
                                                         shrink=True)],
                                                 [sg.pin(start_menu,
@@ -190,15 +175,6 @@ def main(theme='Python'):
             #              keep_on_top=True, button_color=('white', 'red'), grab_anywhere=True)
             #     # break the loop
             #     break
-
-        # -------------diy menu-------------
-        elif event == diy_but.Key:
-            menu.update(visible=False)
-            diy_menu.update(visible=True)
-        # back from diy menu to main menu
-        elif event == back_diy_but.Key:
-            menu.update(visible=True)
-            diy_menu.update(visible=False)
 
         # -------------help menu-------------
         elif event == help_but.Key:  # go to help menu
